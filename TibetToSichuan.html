@@ -33,7 +33,7 @@
                 return flag;
             }
 
-            window.onload=function(){
+            window.setElementsFrame=function(){
                 var div = window.document.getElementById("container")
                 div.style.width=(window.innerWidth - 40)+"px";
                 if (window.isPC()) {
@@ -45,6 +45,14 @@
                 var textArea = window.document.getElementById("details")
                 textArea.style.width=(window.innerWidth - 40)+"px";
                 textArea.style.height="400px";
+            }
+
+            window.onload=function(){
+                window.setElementsFrame();
+            }
+
+            window.onresize = function(){
+                window.setElementsFrame();
             }
 
             var map = new BMap.Map("container");
