@@ -91,7 +91,7 @@
                 var allRoutePointNamesTmp = window.getAllTitles(window.allRoutePoints);
                 var allRoutePointsTmp = window.buildAllBmapPoints(window.allRoutePoints);
                 map.clearOverlays();//清除地图上所有的覆盖物
-                var driving = new BMap.DrivingRoute(map, {policy: BMAP_DRIVING_POLICY_LEAST_DISTANCE,});//创建驾车实例
+                var driving = new BMap.DrivingRoute(map, {policy: BMAP_DRIVING_POLICY_LEAST_TIME});//创建驾车实例
 
                 var detailsStr = ""
 
