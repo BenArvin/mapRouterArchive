@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>拉萨林芝酒店游路线</title>
+        <script type="text/javascript" src="http://api.map.baidu.com/api?v=1.2"></script>
+    </head>
+    <body>
+        <p>
+            <input type='button' value='开始计算' onclick='run();'/>
+            <input style="width: 15px; height: 15px" type="checkbox" id="showMilesInMap"></input>
+            在地图中显示距离时间
+        </p>
+        <div style="width: 100px; height: 100px;border:1px solid gray" id="container"></div>
+        <br>
+        <div style="font-size:20px">路线详情:</div>
+        <div>
+            <textarea style="font-size:18px" rows="10" cols="30" id="details"></textarea>
+        </div>
+        <script type="text/javascript">
+            window.onload=function(){
+                var div = window.document.getElementById("container")
+                div.style.width=(window.innerWidth - 40)+"px";
+                div.style.height=(window.innerHeight - 120)+"px";
+
+                var textArea = window.document.getElementById("details")
+                textArea.style.width=(window.innerWidth - 40)+"px";
+                textArea.style.height="400px";
+            }
+
+            var map = new BMap.Map("container");
+            map.centerAndZoom(new BMap.Point(113.288386,23.139859),20);
+            map.addControl(new BMap.NavigationControl());// 添加平移缩放控件
+            map.addControl(new BMap.ScaleControl());// 添加比例尺控件
+            map.addControl(new BMap.OverviewMapControl());//添加缩略地图控件
+          
+            // 坐标拾取：http://api.map.baidu.com/lbsapi/getpoint/index.html
+            window.allRoutePoints = [
+                {"name": "拉萨", "point": "91.134549,29.659597"},
+                {"name": "巴松措", "point": "93.974339,30.014093"},
+                {"name": "南伽巴瓦峰", "point": "95.062379,29.634847"},
+                {"name": "雅鲁藏布江大峡谷", "point": "94.888838,29.517996"},
+                {"name": "波密", "point": "95.773902,29.865061"},
+                {"name": "然乌湖", "point": "96.651591,29.485735"},
+                {"name": "来古冰川", "point": "96.857759,29.288352"},
+                {"name": "林芝", "point": "94.37251,29.647262"}]
+            window.allNearbyPoints = [
+                {"name": "新措", "point": "94.238604,30.029304"},
+                {"name": "鲁朗", "point": "94.73352,29.737503"}]
+
+            window.getTitle = function(infoDic) {
+                return infoDic["name"];
+            }
+
+            window.buildBmapPoint = function(infoDic) {
+                var pointStr = infoDic["point"];
+                var parts = pointStr.split(",");
+                var part1 = parseFloat(parts[0]);
+                var part2 = parseFloat(parts[1]);
+                return new BMap.Point(part1, part2);
+            }
+
+            window.getAllTitles = function(infos) {
+                var result = new Array();
+                for (var i=0; i<infos.length; i++) {
+                    result[i] = window.getTitle(infos[i]);
+                }
+                return result;
+            }
+
+            window.buildAllBmapPoints = function(infos) {
+                var result = new Array();
+                for (var i=0; i<infos.length; i++) {
+                    result[i] = window.buildBmapPoint(infos[i]);
+                }
+                return result;
+            }
+            
+            window.run = function (){
+                var showMilesInMap = window.document.getElementById("showMilesInMap").checked
+
+                var allRoutePointNamesTmp = window.getAllTitles(window.allRoutePoints);
+                var allRoutePointsTmp = window.buildAllBmapPoints(window.allRoutePoints);
+                map.clearOverlays();//清除地图上所有的覆盖物
+                var driving = new BMap.DrivingRoute(map, {policy: BMAP_DRIVING_POLICY_LEAST_TIME});//创建驾车实例
+
+                var detailsStr = ""
+
+                var index = 0;
+                driving.search(allRoutePointsTmp[index],allRoutePointsTmp[index + 1]);
+                driving.setSearchCompleteCallback(function(){
+                    var pts = driving.getResults().getPlan(0).getRoute(0).getPath();
+
+                    var distancekm = parseInt(driving.getResults().getPlan(0).getDistance(false)) / 1000;
+                    distancekm = distancekm.toFixed(1);
+                    var distancekmStr = distancekm.toString() + "km";
+
+                    var duration = Math.ceil(parseInt(driving.getResults().getPlan(0).getDuration(false)) / 60) / 60;
+                    duration = duration.toFixed(1);
+                    var durationStr = duration.toString() + "h";
+
+                    var allSteps = driving.getResults().getPlan(0).getRoute(0).getNumSteps();
+                    var centerStep = driving.getResults().getPlan(0).getRoute(0).getStep(Math.floor(allSteps / 2));
+                    var centerPosition = centerStep.getPosition();
+
+                    var polyline = new BMap.Polyline(pts, {strokeColor:"blue",//设置颜色 
+                        strokeWeight:3, //宽度
+                        strokeOpacity:1.0});//透明度
+                    map.addOverlay(polyline);
+
+                    var detailItemStr = allRoutePointNamesTmp[index] + " -> " + allRoutePointNamesTmp[index + 1] + ": " + distancekmStr + ", " + durationStr
+                    if (index == 0) {
+                        var markTmp1 = new BMap.Marker(allRoutePointsTmp[index]);
+                        map.addOverlay(markTmp1);
+                        var nameTmp1 = allRoutePointNamesTmp[index];
+                        var labelTmp1 = new BMap.Label(nameTmp1, {position:allRoutePointsTmp[index]});
+                        map.addOverlay(labelTmp1);
+
+                        detailsStr = detailItemStr 
+                    } else {
+                        detailsStr = detailsStr + "\n" + detailItemStr
+                    }
+
+                    var markTmp2 = new BMap.Marker(allRoutePointsTmp[index + 1]);
+                    map.addOverlay(markTmp2);
+
+                    var nameTmp2 = allRoutePointNamesTmp[index + 1];
+                    var labelTmp2 = new BMap.Label(nameTmp2, {position:allRoutePointsTmp[index + 1]});
+                    map.addOverlay(labelTmp2);
+
+                    if (showMilesInMap) {
+                        var routelabelName = distancekmStr + " " + durationStr;
+                        var routerlabel = new BMap.Label(routelabelName, {position:centerPosition});
+                        map.addOverlay(routerlabel);
+                    }
+
+
+                    map.centerAndZoom(pts[0],12);
+
+                    index = index + 1;
+                    if (index < allRoutePointsTmp.length - 1) {
+                        driving.search(allRoutePointsTmp[index],allRoutePointsTmp[index + 1]);
+                    } else {
+                        var allNearbyPointNamesTmp = window.getAllTitles(window.allNearbyPoints);
+                        var allNearbyPointsTmp = window.buildAllBmapPoints(window.allNearbyPoints);
+
+                        for (var i=0; i<allNearbyPointsTmp.length; i++) {
+                            var markTmp = new BMap.Marker(allNearbyPointsTmp[i]);
+                            map.addOverlay(markTmp);
+
+                            var nameTmp = allNearbyPointNamesTmp[i];
+                            var labelTmp = new BMap.Label(nameTmp, {position:allNearbyPointsTmp[i]});
+                            map.addOverlay(labelTmp);
+                        }
+
+                        window.document.getElementById("details").innerHTML = detailsStr
+
+                        setTimeout(function(){
+                            var allPoints = new Array()
+                            for (var i=0; i<allRoutePointsTmp.length; i++) {
+                                allPoints.push(allRoutePointsTmp[i])
+                            }
+                            for (var i=0; i<allNearbyPointsTmp.length; i++) {
+                                allPoints.push(allNearbyPointsTmp[i])
+                            }
+                            map.setViewport(allPoints);//调整到最佳视野
+                        },500);
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
