@@ -18,15 +18,47 @@
             <textarea style="font-size:18px" rows="10" cols="30" id="details"></textarea>
         </div>
         <script type="text/javascript">
-            window.onload=function(){
+            window.isPC = function() {
+                var userAgentInfo = navigator.userAgent;
+                var Agents = ["Android", "iPhone",
+                "SymbianOS", "Windows Phone",
+                "iPad", "iPod"];
+                var flag = true;
+                for (var v = 0; v < Agents.length; v++) {
+                    if (userAgentInfo.indexOf(Agents[v]) > 0) {
+                        flag = false;
+                        break;
+                    }
+                }
+                return flag;
+            }
+
+            window.setElementsFrame=function(){
                 var div = window.document.getElementById("container")
                 div.style.width=(window.innerWidth - 40)+"px";
-                div.style.height=(window.innerHeight - 120)+"px";
+                if (window.isPC()) {
+                    div.style.height=(window.innerHeight - 120)+"px";
+                } else {
+                    div.style.height=(window.innerHeight / 3 * 2)+"px";
+                }
 
                 var textArea = window.document.getElementById("details")
                 textArea.style.width=(window.innerWidth - 40)+"px";
                 textArea.style.height="400px";
             }
+
+            window.onload=function(){
+                window.setElementsFrame();
+            }
+
+            window.onresize = function(){
+                window.setElementsFrame();
+            }
+            
+            window.addEventListener("orientationchange", function(event) {
+                // 根据event.orientation|screen.orientation.angle等于0|180、90|-90度来判断横竖屏
+                window.setElementsFrame();
+            }, false);
 
             var map = new BMap.Map("container");
             map.centerAndZoom(new BMap.Point(113.288386,23.139859),20);
